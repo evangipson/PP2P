@@ -18,7 +18,11 @@ part = []
 newlist = [i.split(',') for i in s]
 #get the last entry out of there
 newlist.pop()
-
+for address in range(len(newlist)):
+    ip.append(newlist[address][0])
+    part.append(newlist[address][1])
+print ip
+print part
 #create a socket
 #connect to the IP's
 #populate the file list
