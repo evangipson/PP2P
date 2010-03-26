@@ -9,93 +9,81 @@ from socket import *
 import select
 import thread
 import urllib
+#global variables
+global size_of_chunk
 #determine how big a chunk is
 def chunk(file_size):
-       file_size = file_size/4.0
-       return file_size
+       final_file_size = file_size/4
+       return final_file_size
 #determine where to start seeking
-def part(file_size, part):
-       part = file_size * part
-       return part
-#create/open a file in 'wb', re-assemble data
-def recv_data(part, size_of_file, filename):
-       #get filename path
-       path = '/p2p/files/' + filename
-       #open file to write binary
-       FILE = open(path,'wb')
-       FILE.seek(part)
-       chunk = chunk(size_of_file)
-       while 1:
-           recv_data = s.recv(chunk)
-           if not data:
-              FILE.close()
-              print 'File complete!'
-              break
-           else:
-              FILE.write(chunk)
-       FILE.close()
-#open the file in 'rb', chunk up data
-def send_data(size_of_file, filename):
-       #get filename path
-       path = '/p2p/files/' + filename
-       #open file to send
-       FILE = open(path,'rb')
-       data = FILE.read()
-       #get values to read
-       chunk = chunk(size_of_file)
-       part = part(chunk, part)
-       try:
-           FILE.seek(part)
-       except:
-           print 'File corrupt/not correct size'
-           FILE.close()
-       else:
-          #read your data
-          data = FILE.read(chunk)
-          #close the file
-          FILE.close()
-          #send your chunk
-          s.send(data)
+def part(file_size, secure_part):
+       final_part = file_size * (secure_part - 1)
+       return final_part      
 #main loop
-def work(i,size_of_file, filename):
+def work(i,ip,size_of_file, filename, secure_part):
        #specify host ip and port num
        serverHost = ip[i]
-       serverPort = 9000
+       serverPort = 9010
        #specify part your getting from host
-       newpart = part[i]
+       newpart = secure_part
        #specify your ip and port num
        myHost = ''
-       myPort = 9000
+       myPort = 9010
        #create a TCP socket for clients
-       s = socket(AF_INET, SOCK_STREAM)
-       print 'Before the try block'
+       new_socket = socket(AF_INET, SOCK_STREAM)
        #connect to server
        try:
-              s.connect((serverHost, serverPort))
+              new_socket.connect((serverHost, serverPort))
        #if you can't connect, try to listen
        except:
-              print 'client not ready'
-              s.bind((myHost, myPort+1))
-              s.listen(5)
-              s, address = s.accept()
-              try:
-                  while 1:
-                     continue
-              except:
-                     print "program quits.."         
-                     connection.close()
-                     s.close()
+            print 'client not ready'
+            new_socket.bind((myHost, myPort))
+            new_socket.listen(5)
+            connection, address = new_socket.accept()
+            print 'client connected'
+            #get filename path
+            path = '/p2p/files/' + filename
+            #open file to send
+            FILE = open(path,'rb')
+            print 'opened file for sending...'
+            data = FILE.read()
+            #get values to read
+            newpart = part(size_of_chunk, secure_part)
+            try:
+                FILE.seek(newpart)
+            except:
+                print 'File corrupt/not correct size'
+                FILE.close()
+            else:
+                #read your data
+                sending_data = FILE.read(size_of_chunk)
+                #close the file
+                FILE.close()
+                #send your chunk
+                print 'sending data...'
+                connection.send(sending_data)
+                connection.close()
        else:
-              recv_data(newpart, size_of_file, filename)
-              try:
-                  while 1:
-                     continue
-              except:
-                  print 'program quits...'
-                  s.close()
+            print 'connected to host' #get filename path
+            path = '/p2p/files/' + filename
+            #open file to write binary
+            FILE = open(path,'wb')
+            newpart = part(size_of_chunk, secure_part)
+            FILE.seek(newpart)
+            print filename + ' downloading...'
+            while 1:
+                recv_data = new_socket.recv(size_of_chunk)
+                if not data:
+                   FILE.close()
+                   print 'File complete!'
+                   break
+                else:
+                   FILE.write(recv_data)
+                   FILE.close()  
+                s.close()
 #see website for available files
 #   -have link for file download
-#   -http://cs5550.webs.com/aint_no_rest.tracer
+#   -http://cs5550.webs.com/aint_no_rest.tracker
 filename = raw_input("What file would you like to download? ")
 path = 'http://cs5550.webs.com/' + filename + '.tracker'
 try:
@@ -108,22 +96,24 @@ else:
        f.close()
        #initializing lists
        ip = []
-       part = []
+       temppart = []
+       securepart = []
        #get the list of IP's 
        newlist = [i.split(',') for i in s]
        #get the last entry out of there
        newlist.pop()
        #size of file is the last entry, minus newline
        size_of_file = newlist.pop()
+       size_of_chunk = chunk(int(size_of_file[0]))
        #break it down - ip's and parts
        for i in range(len(newlist)):
            ip.append(newlist[i][0])
-           part.append(newlist[i][1])
-       print ip
-       print part
+           temppart.append(newlist[i][1])
+       for num in temppart:
+           securepart.append(int(num))
        #giant for loop
        time = len(ip)    
        for i in range(time - 1):
               #thread the work process
               #for efficiency
-              work(i, size_of_file[0], filename)
+              work(i,ip, size_of_file, filename, securepart[i])
