@@ -13,7 +13,7 @@ import urllib
 global size_of_chunk
 #determine how big a chunk is
 def chunk(file_size):
-       final_file_size = file_size/4
+       final_file_size = file_size/5
        return final_file_size
 #determine where to start seeking
 def part(file_size, secure_part):
@@ -23,26 +23,26 @@ def part(file_size, secure_part):
 def work(i,ip,size_of_file, filename, secure_part):
        #specify host ip and port num
        serverHost = ip[i]
-       serverPort = 9010
+       serverPort = 9000
        #specify part your getting from host
        newpart = secure_part
        #specify your ip and port num
        myHost = ''
-       myPort = 9010
+       myPort = 8060
        #create a TCP socket for clients
        new_socket = socket(AF_INET, SOCK_STREAM)
        #connect to server
        try:
-              new_socket.connect((serverHost, serverPort))
+            new_socket.connect((serverHost, serverPort))
        #if you can't connect, try to listen
        except:
+            new_socket.bind((myHost, myPort+i))
             print 'client not ready'
-            new_socket.bind((myHost, myPort))
             new_socket.listen(5)
             connection, address = new_socket.accept()
             print 'client connected'
             #get filename path
-            path = '/p2p/files/' + filename
+            path = '/p2p/files/' + filename + '.mp3'
             #open file to send
             FILE = open(path,'rb')
             print 'opened file for sending...'
@@ -54,6 +54,7 @@ def work(i,ip,size_of_file, filename, secure_part):
             except:
                 print 'File corrupt/not correct size'
                 FILE.close()
+                connection.close()
             else:
                 #read your data
                 sending_data = FILE.read(size_of_chunk)
@@ -73,14 +74,13 @@ def work(i,ip,size_of_file, filename, secure_part):
             print filename + ' downloading...'
             while 1:
                 recv_data = new_socket.recv(size_of_chunk)
-                if not data:
+                if not recv_data:
                    FILE.close()
                    print 'File complete!'
+                   new_socket.close()
                    break
                 else:
-                   FILE.write(recv_data)
-                   FILE.close()  
-                s.close()
+                   FILE.write(recv_data) 
 #see website for available files
 #   -have link for file download
 #   -http://cs5550.webs.com/aint_no_rest.tracker
@@ -113,7 +113,7 @@ else:
            securepart.append(int(num))
        #giant for loop
        time = len(ip)    
-       for i in range(time - 1):
+       for i in range(time):
               #thread the work process
               #for efficiency
               work(i,ip, size_of_file, filename, securepart[i])
