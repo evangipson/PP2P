@@ -28,7 +28,7 @@ def work(i,ip,size_of_file, filename, secure_part):
        newpart = secure_part
        #specify your ip and port num
        myHost = ''
-       myPort = 8060
+       myPort = 9020
        #create a TCP socket for clients
        new_socket = socket(AF_INET, SOCK_STREAM)
        #connect to server
