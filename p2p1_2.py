@@ -20,7 +20,7 @@ def part(file_size, secure_part):
        final_part = file_size * (secure_part - 1)
        return final_part
 #set up a socket for listening, to send shit.
-def Listen(i,filename,secure_part):
+def Listen(i,filename):
        myHost = ''
        myPort = 8060
        listen_socket = socket(AF_INET,SOCK_STREAM)
@@ -28,12 +28,16 @@ def Listen(i,filename,secure_part):
        listen_socket.listen(5)
        connection, address = listen_socket.accept()
        print 'client connected'
-       path = '/p2p/files/' + filename
+       thread.interrupt_main()
+      
+def ListenWork(data, secure_part, filename, extension):
+       path = '/p2p/files/' + filename + extension
        #open file to send
        FILE = open(path,'rb')
        print 'opened', filename, 'for sending...'
        data = FILE.read()
-       #get values to read
+       FILE.close()
+        #get values to read
        newpart = part(size_of_chunk, secure_part)
        try:
               FILE.seek(newpart)
@@ -53,7 +57,7 @@ def Listen(i,filename,secure_part):
               connection.close()
               thread.interrupt_main()
 #main loop
-def work(i,ip,size_of_file, filename, secure_part):
+def work(i,ip,size_of_file, filename, extension, secure_part):
        #specify host ip and port num
        serverHost = ip[i]
        serverPort = 8060
@@ -67,7 +71,7 @@ def work(i,ip,size_of_file, filename, secure_part):
             print 'clients not connected yet.'
        else:
             print 'connected to host' #get filename path
-            path = '/p2p/files/' + filename
+            path = '/p2p/files/' + filename + extension
             #open file to write binary
             FILE = open(path,'wb')
             newpart = part(size_of_chunk, secure_part)
@@ -83,7 +87,14 @@ def work(i,ip,size_of_file, filename, secure_part):
                 else:
                    FILE.write(recv_data)
 
-
+#get how many files you have in p2p/files and start a new thread for each file
+#listen for downloads
+path = '/p2p/files'
+dir_list = os.listdir(path)
+print 'Listening for available clients...'
+for file_name in range(len(dir_list)):
+       #for each file in /files for incoming connections, listen
+       thread.start_new_thread(Listen,(file_name,dir_list[file_name]))
 #see website for available files
 #   -have link for file download
 n = urllib.urlopen('http://cs5550.webs.com/file_list')
@@ -139,16 +150,7 @@ while 1:
            temppart.append(newlist[i][1])
        for num in temppart:
            securepart.append(int(num))
-           #get how many files you have in p2p/files and start a new thread for each file
-       #listen for downloads
-       path = '/p2p/files'
-       dir_list = os.listdir(path)
-       would_you = raw_input( 'would you like to serve out files? ')
-       if would_you == 'y' or would_you == 'Y'
-              for file_name in range(len(dir_list)):
-                     #start a thread for each file in /files for incoming connections
-                     thread.start_new_thread(Listen, (file_name,dir_list[file_name]))
-       else:
-              #download loop
-              for i in range(int(size_of_file[1])):
-                     thread.start_new_thread(work,(i,ip, int(size_of_file[0]), filename, securepart[i]))
+       #download loop
+       for i in range(int(size_of_file[1])):
+              thread.start_new_thread(ListenWork,(i, int(size_of_file[1]), filename, extension))
+              thread.start_new_thread(work,(i,ip, int(size_of_file[0]), filename, extension, securepart[i]))
