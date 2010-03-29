@@ -19,18 +19,15 @@ def chunk(file_size,how_many):
 def part(file_size, secure_part):
        final_part = file_size * (secure_part - 1)
        return final_part
-#set up a socket for listening, to send shit.
-def Listen(i,filename):
+def ListenWork(data, secure_part, filename, extension):
        myHost = ''
-       myPort = 8060
+       myPort = 9008
        listen_socket = socket(AF_INET,SOCK_STREAM)
        listen_socket.bind((myHost, myPort+i))
        listen_socket.listen(5)
        connection, address = listen_socket.accept()
        print 'client connected'
        thread.interrupt_main()
-      
-def ListenWork(data, secure_part, filename, extension):
        path = '/p2p/files/' + filename + extension
        #open file to send
        FILE = open(path,'rb')
@@ -87,14 +84,6 @@ def work(i,ip,size_of_file, filename, extension, secure_part):
                 else:
                    FILE.write(recv_data)
 
-#get how many files you have in p2p/files and start a new thread for each file
-#listen for downloads
-path = '/p2p/files'
-dir_list = os.listdir(path)
-print 'Listening for available clients...'
-for file_name in range(len(dir_list)):
-       #for each file in /files for incoming connections, listen
-       thread.start_new_thread(Listen,(file_name,dir_list[file_name]))
 #see website for available files
 #   -have link for file download
 n = urllib.urlopen('http://cs5550.webs.com/file_list')
@@ -151,6 +140,10 @@ while 1:
        for num in temppart:
            securepart.append(int(num))
        #download loop
-       for i in range(int(size_of_file[1])):
-              thread.start_new_thread(ListenWork,(i, int(size_of_file[1]), filename, extension))
-              thread.start_new_thread(work,(i,ip, int(size_of_file[0]), filename, extension, securepart[i]))
+       do_you = raw_input('would you like to serve files? ')
+       if do_you == 'y':
+              for i in range(int(size_of_file[1])):
+                     ListenWork(i, int(size_of_file[1]), filename, extension)
+       else:
+              for i in range(int(size_of_file[1])):  
+                     work(i,ip, int(size_of_file[0]), filename, extension, securepart[i])
