@@ -143,10 +143,12 @@ while 1:
        #listen for downloads
        path = '/p2p/files'
        dir_list = os.listdir(path)
-       #print 'Listening for available clients...'
-       for file_name in range(len(dir_list)):
-              #start a thread for each file in /files for incoming connections
-              thread.start_new_thread(Listen, (file_name,dir_list[file_name]))
-       #download loop
-       for i in range(int(size_of_file[1])):
-              thread.start_new_thread(work,(i,ip, int(size_of_file[0]), filename, securepart[i]))
+       would_you = raw_input( 'would you like to serve out files? ')
+       if would_you == 'y' or would_you == 'Y'
+              for file_name in range(len(dir_list)):
+                     #start a thread for each file in /files for incoming connections
+                     thread.start_new_thread(Listen, (file_name,dir_list[file_name]))
+       else:
+              #download loop
+              for i in range(int(size_of_file[1])):
+                     thread.start_new_thread(work,(i,ip, int(size_of_file[0]), filename, securepart[i]))
