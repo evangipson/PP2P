@@ -21,19 +21,17 @@ def part(file_size, secure_part):
        return final_part
 def ListenWork(data, secure_part, filename, extension):
        myHost = ''
-       myPort = 9008
+       myPort = 6000
        listen_socket = socket(AF_INET,SOCK_STREAM)
        listen_socket.bind((myHost, myPort+i))
        listen_socket.listen(5)
        connection, address = listen_socket.accept()
        print 'client connected'
-       thread.interrupt_main()
        path = '/p2p/files/' + filename + extension
        #open file to send
        FILE = open(path,'rb')
        print 'opened', filename, 'for sending...'
        data = FILE.read()
-       FILE.close()
         #get values to read
        newpart = part(size_of_chunk, secure_part)
        try:
@@ -42,7 +40,6 @@ def ListenWork(data, secure_part, filename, extension):
               print 'File corrupt/not correct size'
               FILE.close()
               connection.close()
-              thread.interrupt_main()
        else:
               #read your data
               sending_data = FILE.read(size_of_chunk)
@@ -52,7 +49,6 @@ def ListenWork(data, secure_part, filename, extension):
               print 'sending data...'
               connection.send(sending_data)
               connection.close()
-              thread.interrupt_main()
 #main loop
 def work(i,ip,size_of_file, filename, extension, secure_part):
        #specify host ip and port num
@@ -70,9 +66,9 @@ def work(i,ip,size_of_file, filename, extension, secure_part):
             print 'connected to host' #get filename path
             path = '/p2p/files/' + filename + extension
             #open file to write binary
-            FILE = open(path,'wb')
-            newpart = part(size_of_chunk, secure_part)
-            FILE.seek(newpart)
+            FILE = open(path,'ab')
+            #newpart = part(size_of_chunk, secure_part)
+            #FILE.seek(newpart)
             print filename + ' downloading...'
             while 1:
                 recv_data = new_socket.recv(size_of_chunk)
