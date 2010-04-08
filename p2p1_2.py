@@ -79,10 +79,10 @@ def part(file_size, secure_part):
 
 def ListenWork(i,file_size, filename, extension, parts):
        myHost = ''
-       myPort = 9000 + i
+       myPort = 9000
        listen_socket = socket(AF_INET,SOCK_STREAM)
        for i in range(parts):
-              listen_socket.bind((myHost, myPort))
+              listen_socket.bind((myHost, myPort+i))
               listen_socket.listen(parts)
               connection, address = listen_socket.accept()
               #print 'client connected'
@@ -115,7 +115,7 @@ def ListenWork(i,file_size, filename, extension, parts):
 def work(i,ip,size_of_file, filename, extension, secure_part, chunk):
        #specify host ip and port num
        serverHost = ip[i]
-       serverPort = 7000
+       serverPort = 9000
        #create a TCP socket for clients
        new_socket = socket(AF_INET, SOCK_STREAM)
        #connect to server
