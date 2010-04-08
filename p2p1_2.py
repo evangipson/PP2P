@@ -2,7 +2,6 @@
 # programmers: evan gipson, nick hawkes
 # peer-to-peer_1.0
 # date: 3/20/2010
-import wx
 import os
 import sys
 from socket import *
@@ -50,10 +49,12 @@ def create(filename, extension):
        path = '/home/evan/' + filename + '.tracker'
        new_path = '/p2p/files/' + filename + extension
        file_size = os.path.getsize(new_path)
+       #information list for returns
+       information = []
        #chunk up file to 1000 bytes a piece
-       new = file_size/50000
+       new = file_size/512000
        #get remainder
-       rem = file_size%50000
+       rem = file_size%512000
        #open file for writing the tracker to
        FILE = open(path,'w')
        #find my IP out
@@ -63,23 +64,26 @@ def create(filename, extension):
        s.close()
        #start writing
        for i in range(new):
-             FILE.write(str(my_ip[0])+','+str(i+1)+','+'50000\n')
-       FILE.write(str(my_ip[0])+','+str(new+2)+','+str(rem)+'\n')
-       FILE.write(str(file_size)+','+str(new+2))
+             FILE.write(str(my_ip[0])+','+str(i+1)+','+'512000\n')
+       FILE.write(str(my_ip[0])+','+str(new+1)+','+str(rem)+'\n')
+       FILE.write(str(file_size)+','+str(new+1))
        #close file up
        FILE.close()
-       #return file size
+       #return file size and how many pieces (0 doesn't count)
+       return [file_size,(new+1)]
+
 #determine where to start seeking
 def part(file_size, secure_part):
        final_part = file_size * (secure_part - 1)
        return final_part
-def ListenWork(secure_part, filename, extension):
+
+def ListenWork(i,file_size, filename, extension, parts):
        myHost = ''
-       myPort = 7000
+       myPort = 9000 + i
        listen_socket = socket(AF_INET,SOCK_STREAM)
-       listen_socket.bind((myHost, myPort+i))
-       while 1:
-              listen_socket.listen(1)
+       for i in range(parts):
+              listen_socket.bind((myHost, myPort))
+              listen_socket.listen(parts)
               connection, address = listen_socket.accept()
               #print 'client connected'
               path = '/p2p/files/' + filename + extension
@@ -87,14 +91,14 @@ def ListenWork(secure_part, filename, extension):
               FILE = open(path,'rb')
               #print 'opened', filename, 'for sending...'
               data = FILE.read()
-               #get values to read
-              newpart = part(size_of_chunk, secure_part)
+              newpart = part(file_size, i)
               try:
                      FILE.seek(newpart)
               except:
                      print 'File corrupt/not correct size'
                      FILE.close()
                      connection.close()
+                     thread.interrupt_main()
                      break
               else:
                      #read your data
@@ -105,6 +109,8 @@ def ListenWork(secure_part, filename, extension):
                      #print 'sending data...'
                      connection.send(sending_data)
                      connection.close()
+                     thread.interrupt_main()
+                     
 #main loop
 def work(i,ip,size_of_file, filename, extension, secure_part, chunk):
        #specify host ip and port num
@@ -129,7 +135,7 @@ def work(i,ip,size_of_file, filename, extension, secure_part, chunk):
                 recv_data = new_socket.recv(size_of_chunk)
                 if not recv_data:
                    FILE.close()
-                   print 'File complete!'
+                   #print 'File complete!'
                    new_socket.close()
                    break
                 else:
@@ -144,6 +150,7 @@ file_list = n.read().split('\n')
 temp_file_list = []
 temp_ext_list = []
 temp_size_list = []
+full_filename = []
 #break up extensions
 new_file_list = [i.split(',') for i in file_list]
 #get empty off the list
@@ -156,14 +163,16 @@ for i in range(len(new_file_list)):
        temp_ext = new_file_list[i][1]
        full_filename = temp_filename + temp_ext
        #check if file is in /p2p/files, if so, omit
-       if full_filename in dirList[i]:
+       try:
+              full_filename in dirList[i]
+       except:
               temp_file_list.append(temp_filename)
               temp_ext_list.append(temp_ext)
        else:
               #create a tracker if in your directory
               alpha_file_size = create(temp_filename, temp_ext)
               #start a listening thread
-              thread.start_new_thread(ListenWork,(alpha_file_size, temp_filename, temp_ext))
+              thread.start_new_thread(ListenWork,(i,alpha_file_size[0], temp_filename, temp_ext, alpha_file_size[1]))
 #show the list of files and index
 #while loop
 while 1:
@@ -195,7 +204,7 @@ while 1:
        #size of file is the last entry, minus newline
        #contains size in bytes and how much to split
        size_of_file = newlist.pop()
-       print size_of_file
+       #print size_of_file
        #break it down - ip's and parts
        for i in range(len(newlist)):
               ip.append(newlist[i][0])
