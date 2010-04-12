@@ -5,7 +5,6 @@
 import os
 import sys
 from socket import *
-import select
 import thread
 import urllib
 from itertools import cycle
@@ -74,17 +73,17 @@ def create(filename, extension):
 
 #determine where to start seeking
 def part(file_size, secure_part):
-       final_part = file_size * (secure_part - 1)
+       final_part = file_size * (secure_part)
        return final_part
 
 def ListenWork(i,file_size, filename, extension, parts):
        myHost = ''
-       myPort = 9000
-       listen_socket = socket(AF_INET,SOCK_STREAM)
+       myPort = 9010 + i
        for i in range(parts):
-              listen_socket.bind((myHost, myPort+i))
-              listen_socket.listen(parts)
-              connection, address = listen_socket.accept()
+              listen = socket(AF_INET,SOCK_STREAM)
+              listen.bind((myHost, myPort))
+              listen.listen(parts)
+              connection, address = listen.accept()
               #print 'client connected'
               path = '/p2p/files/' + filename + extension
               #open file to send
@@ -98,6 +97,7 @@ def ListenWork(i,file_size, filename, extension, parts):
                      print 'File corrupt/not correct size'
                      FILE.close()
                      connection.close()
+                     listen_socket.close()
                      thread.interrupt_main()
                      break
               else:
@@ -109,20 +109,22 @@ def ListenWork(i,file_size, filename, extension, parts):
                      #print 'sending data...'
                      connection.send(sending_data)
                      connection.close()
-                     thread.interrupt_main()
+              listen.close()
+              thread.interrupt_main()
                      
 #main loop
 def work(i,ip,size_of_file, filename, extension, secure_part, chunk):
        #specify host ip and port num
        serverHost = ip[i]
-       serverPort = 9000
+       serverPort = 9010
        #create a TCP socket for clients
        new_socket = socket(AF_INET, SOCK_STREAM)
        #connect to server
        try:
             new_socket.connect((serverHost, serverPort+i))
-       #if you can't connect, try to listen
+       #if you can't connect, do nothing
        except:
+            new_socket.close()
             pass
        else:
             percent = int(i)*100.0 / int(size_of_files[1])
