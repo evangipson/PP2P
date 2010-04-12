@@ -69,14 +69,14 @@ def create(filename, extension):
        #close file up
        FILE.close()
        #return file size and how many pieces (0 doesn't count)
-       return [file_size,(new+1)]
+       return [file_size,(new+1),rem]
 
 #determine where to start seeking
 def part(file_size, secure_part):
        final_part = file_size * (secure_part)
        return final_part
 
-def ListenWork(i,file_size, filename, extension, parts):
+def ListenWork(i,file_size, filename, extension, parts,rem):
        myHost = ''
        myPort = 9010 + i
        for i in range(parts):
@@ -102,7 +102,10 @@ def ListenWork(i,file_size, filename, extension, parts):
                      break
               else:
                      #read your data
-                     sending_data = FILE.read(size_of_chunk)
+                     if (i == parts):
+                         sending_data = FILE.read(rem)
+                     else:
+                         sending_data = FILE.read(512000)
                      #close the file
                      FILE.close()
                      #send your chunk
@@ -127,14 +130,14 @@ def work(i,ip,size_of_file, filename, extension, secure_part, chunk):
             new_socket.close()
             pass
        else:
-            percent = int(i)*100.0 / int(size_of_files[1])
+            percent = int(i)*100.0 / int(size_of_file[1])
             sb.update(i)
             #get filename path
             path = '/p2p/files/' + filename + extension
             #open file to write binary
             FILE = open(path,'ab')
             while 1:
-                recv_data = new_socket.recv(size_of_chunk)
+                recv_data = new_socket.recv(chunk)
                 if not recv_data:
                    FILE.close()
                    #print 'File complete!'
@@ -174,7 +177,7 @@ for i in range(len(new_file_list)):
               #create a tracker if in your directory
               alpha_file_size = create(temp_filename, temp_ext)
               #start a listening thread
-              thread.start_new_thread(ListenWork,(i,alpha_file_size[0], temp_filename, temp_ext, alpha_file_size[1]))
+              thread.start_new_thread(ListenWork,(i,alpha_file_size[0], temp_filename, temp_ext, alpha_file_size[1], alpha_file_size[2]))
 #show the list of files and index
 #while loop
 while 1:
