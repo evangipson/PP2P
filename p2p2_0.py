@@ -75,8 +75,6 @@ def create(filename, extension):
                 running = 0
                 #write the contents to the file
                 FILE.write(str(my_ip[0])+','+str(i)+','+'512000,'+str(randPort)+'\n')
-    #close up socket
-    s.close()
     #generate new random port
     randPort = random.randrange(2000,10000)
     #while variable
@@ -239,6 +237,8 @@ def listen(socket, filename, extension, part):
     connection.send(data)
     #close up connection
     connection.close()
+    #close up
+    socket.close()
     #stop thread
     thread.interrupt_main()
 
