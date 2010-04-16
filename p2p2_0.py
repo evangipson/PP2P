@@ -90,7 +90,7 @@ def create(filename, extension):
             randPort = random.randrange(2000,10000)
         else:
             #if it's successful, start new listening thread
-            thread.start_new_thread(listen,(new_s, filename, extension, new))
+            thread.start_new_thread(listen,(new_s,filename, extension, new))
             #stop while loop
             running = 0
             #write the contents to the file
@@ -215,12 +215,12 @@ def tracker(filename):
     #return a giant list of stuff
     return [ip, part, size, port]
 
-def listen(socket, filename, extension, part):
+def listen(new_socket, filename, extension, part):
     #listen on the random port
-    socket.listen(1)
+    new_socket.listen(1)
     #accept incoming connections
-    connection, address = socket.accept()
-    full_filename = filename + extension
+    connection, address = new_socket.accept()
+    full_filename = filename + '.' + extension
     #get username
     username = os.getlogin()
     #fully qualify path
@@ -238,12 +238,12 @@ def listen(socket, filename, extension, part):
     #close up connection
     connection.close()
     #close up
-    socket.close()
+    new_socket.close()
     #stop thread
     thread.interrupt_main()
 
 def populate(filename, extension, ip, part, size, port, total):
-    full_filename = filename + extension
+    full_filename = filename + '.' + extension
     #get username
     username = os.getlogin()
     #fully qualify path
@@ -310,10 +310,9 @@ while 1:
     extension = file_list[user_choice-1][1]
     #open and read the tracker
     #in the format:
-    #ip_list, part_list, size_list, port_list
+    #[0] = ip_list, [1] = part_list,
+    #[2] = size_list, [3] = port_list
     tracker_stuff = tracker(filename)
-    #download the file of choice
-    print "I'd be downloading the file now.\n"
     #get a total (last entry in part_list in tracker_stuff)
     total = tracker_stuff[1][-1]
     #for as many parts as you have...
