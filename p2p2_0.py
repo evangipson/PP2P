@@ -110,6 +110,7 @@ def update_file_list():
     combined_list = [i.split(',') for i in file_list]
     #get last blank entry out
     combined_list.pop()
+    combined_list.pop()
     #-------------------------------------------
     #for whatever files are in /home/user/p2p/files
     #compare with file_list online
@@ -150,6 +151,7 @@ def display_files():
     #get files and extensions seperate
     combined_list = [i.split(',') for i in file_list]
     #get last blank entry out
+    combined_list.pop()
     combined_list.pop()
     #-------------------------------------
     #compare whatever is in /home/user/p2p/files
