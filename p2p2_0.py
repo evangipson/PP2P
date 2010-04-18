@@ -15,7 +15,7 @@ def update_gui(part, total):
         sys.stdout.flush()
     #if not, write out percents!
     else:
-        sys.stdout.write(str(percent) + '%')
+        sys.stdout.write('%.2f' + '%') % percent
         sys.stdout.write('\b' * 10)
         sys.stdout.flush()
 
@@ -70,7 +70,7 @@ def create(filename, extension):
                 randPort = random.randrange(2000,10000)
             else:
                 #if it's successful, start new listening thread
-                thread.start_new_thread(listen,(s, filename, extension, i))
+                thread.start_new_thread(listen,(s, filename, extension, i, 512000))
                 #stop while loop
                 running = 0
                 #write the contents to the file
@@ -90,7 +90,7 @@ def create(filename, extension):
             randPort = random.randrange(2000,10000)
         else:
             #if it's successful, start new listening thread
-            thread.start_new_thread(listen,(new_s,filename, extension, new))
+            thread.start_new_thread(listen,(new_s,filename, extension, new, rem))
             #stop while loop
             running = 0
             #write the contents to the file
@@ -98,9 +98,6 @@ def create(filename, extension):
     #FILE.write(str(file_size)+','+str(new)) <-- ditching this for now
     #close file up
     FILE.close()
-    #return file size and how many pieces (0 doesn't count), and remainder
-    #return [file_size,(new+1),rem]
-
 #update the file list to include your files
 def update_file_list():
     #variables
@@ -215,7 +212,7 @@ def tracker(filename):
     #return a giant list of stuff
     return [ip, part, size, port]
 
-def listen(new_socket, filename, extension, part):
+def listen(new_socket, filename, extension, part, size):
     #listen on the random port
     new_socket.listen(1)
     #accept incoming connections
@@ -234,7 +231,7 @@ def listen(new_socket, filename, extension, part):
     #close up file
     FILE.close()
     #send out your data
-    connection.send(data)
+    connection.send(send_data)
     #close up connection
     connection.close()
     #close up
