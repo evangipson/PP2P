@@ -186,9 +186,9 @@ def display_files():
             pass
         else:
             new_list.append(filename)
-            new_list_final[i.split ('.') for i in new_list]
             print '%d: %s' % (i, filename)
             i += 1
+    new_list_final = [i.split('.') for i in new_list]
     return new_list_final
 
 def tracker(filename):
@@ -220,32 +220,28 @@ def tracker(filename):
     return [ip, part, size, port]
 
 def listen(new_socket, filename, extension, part, size):
-    #keep listening on the port even after a connection and download
-    while 1:
-        #listen on the random port
-        new_socket.listen(1)
-        #accept incoming connections
-        connection, address = new_socket.accept()
-        full_filename = filename + '.' + extension
-        #get username
-        username = os.getlogin()
-        #fully qualify path
-        file_path = '/home/' + username + '/p2p/files/' + full_filename
-        #open the file for reading
-        FILE = open(file_path, 'rb')
-        #read the desired parts
-        FILE.seek(part * 512000)
-        #set up data buffer for sending data
-        send_data = FILE.read(size)
-        #close up file
-        FILE.close()
-        #send out your data
-        connection.send(send_data)
-    #stop thread
-    thread.interrupt_main()
+    #listen on the random port
+    new_socket.listen(1)
+    #accept incoming connections
+    connection, address = new_socket.accept()
+    full_filename = filename + '.' + extension
+    #get username
+    username = os.getlogin()
+    #fully qualify path
+    file_path = '/home/' + username + '/p2p/files/' + full_filename
+    #open the file for reading
+    FILE = open(file_path, 'rb')
+    #read the desired parts
+    FILE.seek(part * 512000)
+    #set up data buffer for sending data
+    send_data = FILE.read(size)
+    #close up file
+    FILE.close()
+    #send out your data
+    connection.send(send_data)
 
 def populate(filename, extension, ip, part, size, port, total):
-    full_filename = filename + extension
+    full_filename = filename + '.' + extension
     #get username
     username = os.getlogin()
     #fully qualify path
@@ -299,8 +295,6 @@ if len(dirList) != 0:
         file_list = files.split('.')
         create(file_list[0], file_list[1])
 while 1:
-    #empty file_list for re-initialization
-    file_list = []
     #display the files and get a list of all files back
     file_list = display_files()
     #ask for input
