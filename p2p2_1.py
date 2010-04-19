@@ -186,9 +186,10 @@ def display_files():
             pass
         else:
             new_list.append(filename)
+            new_list_final[i.split ('.') for i in new_list]
             print '%d: %s' % (i, filename)
             i += 1
-    return new_list
+    return new_list_final
 
 def tracker(filename):
     #create new path for tracker
